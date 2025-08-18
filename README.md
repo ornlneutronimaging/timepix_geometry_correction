@@ -1,3 +1,5 @@
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ornlneutronimaging/timepix_geometry_correction/main.svg)](https://results.pre-commit.ci/latest/github/ornlneutronimaging/timepix_geometry_correction/main)
+
 # Python Project Template (examplepyapp)
 
 This repository contains a modern Python project managed entirely with [Pixi](https://pixi.sh/), a reproducible and declarative environment manager.
