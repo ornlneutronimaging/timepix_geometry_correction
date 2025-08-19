@@ -3,7 +3,7 @@
 ########################
 [project]
 name = "timepix_geometry_correction"
-description = "timepix1 and 3 chips geometry correction"
+description = "Program to realign the timepix1 and 3 chips"
 dynamic = ["version"]
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -25,7 +25,10 @@ docs = [
 ]
 
 [project.scripts]
-timepix_geometry_correction = "timepix_geometry_correction.__main__:main"
+packagename-cli = "timepix_geometry_correction.timepix_geometry_correction:main"
+
+[project.gui-scripts]
+packagenamepy = "timepix_geometry_correction.timepix_geometry_correction:gui"
 
 [project.urls]
 homepage = "https://github.com/ornlneutronimaging/timepix_geometry_correction"
@@ -114,7 +117,6 @@ versioningit = "*"
 [tool.pixi.package.run-dependencies]
 python = ">=3.10"
 numpy = "*"
-
 
 [tool.pixi.package]
 name = "timepix_geometry_correction"
