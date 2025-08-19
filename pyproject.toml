@@ -2,23 +2,18 @@
 ### Project Metadata ###
 ########################
 [project]
-name = "examplepyapp"
-description = "Example Python repo for neutrons"
+name = "timepix_geometry_correction"
+description = "timepix1 and 3 chips geometry correction"
 dynamic = ["version"]
 requires-python = ">=3.10"
 license = { text = "MIT" }
-keywords = ["neutrons", "example", "python"]
+keywords = ["neutrons", "timepix", "geometry", "correction"]
 readme = "README.md"
 
 dependencies = [
   # Dependencies available from both PyPI and conda should be listed here
   "numpy>=2.2,<3",
-  "QtPy",
-  "PyQt5",
-  "pyqtgraph",
   # Dependencies only available from PyPI
-  "bm3d-streak-removal>=0.2.0,<0.3",
-  "pytest-playwright>=0.7.0,<0.8",
 ]
 
 [project.optional-dependencies]
@@ -30,16 +25,13 @@ docs = [
 ]
 
 [project.scripts]
-packagename-cli = "packagenamepy.packagename:main"
-
-[project.gui-scripts]
-packagenamepy = "packagenamepy.packagename:gui"
+timepix_geometry_correction = "timepix_geometry_correction.__main__:main"
 
 [project.urls]
-homepage = "https://github.com/neutrons/python_project_template/"
-repository = "https://github.com/neutrons/python_project_template/"
+homepage = "https://github.com/ornlneutronimaging/timepix_geometry_correction"
+repository = "https://github.com/ornlneutronimaging/timepix_geometry_correction"
 # documentation = add_url_to_readthedoc_here
-issues = "https://github.com/neutrons/python_project_template/issues"
+issues = "https://github.com/ornlneutronimaging/timepix_geometry_correction/issues"
 
 ####################
 ### Build config ###
@@ -53,19 +45,19 @@ requires = ["hatchling", "versioningit"]
 source = "versioningit"
 
 [tool.hatch.build.hooks.versioningit-onbuild]
-source-file = "src/packagenamepy/_version.py"
-build-file = "packagenamepy/_version.py"
+source-file = "src/timepix_geometry_correction/_version.py"
+build-file = "timepix_geometry_correction/_version.py"
 
 [tool.hatch.build]
 artifacts = [
-  "src/packagenamepy/_version.py",
-  "src/packagenamepy/**/*.yml",
-  "src/packagenamepy/**/*.yaml",
-  "src/packagenamepy/**/*.ini",
+  "src/timepix_geometry_correction/_version.py",
+  "src/timepix_geometry_correction/**/*.yml",
+  "src/timepix_geometry_correction/**/*.yaml",
+  "src/timepix_geometry_correction/**/*.ini",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/packagenamepy"]
+packages = ["src/timepix_geometry_correction"]
 
 [tool.versioningit.vcs]
 method = "git"
@@ -84,7 +76,7 @@ dirty = "{version}"
 distance-dirty = "{next_version}.dev{distance}"
 
 [tool.versioningit.write]
-file = "src/packagenamepy/_version.py"
+file = "src/timepix_geometry_correction/_version.py"
 
 ###################
 ### Pixi config ###
@@ -106,16 +98,12 @@ conda-pypi-map = { "conda-forge" = "pixi-mapping.json" }
 [tool.pixi.dependencies]
 # Conda package dependencies
 numpy = "*"
-scipy = "*" # specify derivative dependencies here if you need them from conda
-# GUI
-pyqtgraph = "*"
-qt = "*"
-qtpy = "*"
-pyqt = "*"
+matplotlib = ">=3.9.1,<4"
+dxchange = ">=0.1.8,<0.2"
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
-examplepyapp = { path = ".", editable = true }
+timepix_geometry_correction = { path = ".", editable = true }
 
 # Pixi Build configuration - https://pixi.sh/latest/reference/pixi_manifest/#pixi-build
 
@@ -126,13 +114,11 @@ versioningit = "*"
 [tool.pixi.package.run-dependencies]
 python = ">=3.10"
 numpy = "*"
-QtPy = "*"
-pyqt = "*"
-pyqtgraph = "*"
+
 
 [tool.pixi.package]
-name = "examplepyapp"
-version = "0.0.0"     # placeholder, overwritten by sync-version
+name = "timepix_geometry_correction"
+version = "0.0.0"                    # placeholder, overwritten by sync-version
 
 [tool.pixi.package.build]
 backend = { name = "pixi-build-python", version = "0.1.*" }
@@ -218,13 +204,16 @@ clean-all = { description = "Clean all artifacts", depends-on = [
 sync-version = { cmd = 'version=$(python -m versioningit); toml set tool.pixi.package.version "$version" --toml-path pyproject.toml', description = "Sync pyproject.toml version with Git version" }
 backup-toml = { cmd = "cp pyproject.toml pyproject.toml.bak", description = "Backup the pyproject.toml file" }
 reset-toml = { cmd = "cp pyproject.toml.bak pyproject.toml; rm pyproject.toml.bak", description = "Reset the pyproject.toml file to the original state" }
+# app
+start = "python -m timepix_geometry_correction"
+
 
 ##############
 ### Pytest ###
 ##############
 
 [tool.pytest.ini_options]
-addopts = "-v --cov=packagenamepy --cov-report=term-missing"
+addopts = "-v --cov=timepix_geometry_correction --cov-report=term-missing"
 pythonpath = [".", "src", "scripts"]
 testpaths = ["tests"]
 python_files = ["test*.py"]
@@ -245,15 +234,14 @@ markers = ["mymarker: example markers goes here"]
 [tool.ruff]
 target-version = "py311"
 line-length = 120
-select = ["A", "ARG", "ASYNC", "BLE", "C90", "E", "F", "I", "N", "UP032", "W"]
 exclude = ["notebooks/**", "**/*.ipynb"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["A", "ARG", "ASYNC", "BLE", "C90", "E", "F", "I", "N", "UP032", "W"]
 ignore = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["packagenamepy"]
+known-first-party = ["timepix_geometry_correction"]
 
 [tool.ruff.format]
 quote-style = "double"

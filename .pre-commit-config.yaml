@@ -6,6 +6,7 @@ repos:
       - id: check-added-large-files
         args: [--maxkb=8192]
       - id: check-json
+        exclude: "notebooks/.*"
       - id: check-merge-conflict
       - id: check-toml
       - id: check-xml
@@ -16,6 +17,7 @@ repos:
         exclude: "tests/cis_tests/.*"
       - id: trailing-whitespace
         exclude: "tests/cis_tests/.*"
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.8
     hooks:
@@ -28,7 +30,7 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        exclude: "tests/cis_tests/.*"
+        exclude: "notebooks/.*"
   - repo: https://github.com/adrienverge/yamllint/
     rev: v1.37.1
     hooks:
