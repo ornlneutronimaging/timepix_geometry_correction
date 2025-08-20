@@ -1,5 +1,5 @@
 import numpy as np
-from dxchange import read_tiff
+from PIL import Image
 
 
 def load_tiff_image(file_path):
@@ -12,4 +12,5 @@ def load_tiff_image(file_path):
     Returns:
     np.ndarray: Loaded image.
     """
-    return np.array(read_tiff(file_path))
+    with Image.open(file_path) as img:
+        return np.array(img)

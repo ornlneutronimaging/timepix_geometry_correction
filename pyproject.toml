@@ -13,6 +13,7 @@ readme = "README.md"
 dependencies = [
   # Dependencies available from both PyPI and conda should be listed here
   "numpy>=2.2,<3",
+  "hatchling",
   # Dependencies only available from PyPI
 ]
 
@@ -26,9 +27,6 @@ docs = [
 
 [project.scripts]
 packagename-cli = "timepix_geometry_correction.timepix_geometry_correction:main"
-
-[project.gui-scripts]
-packagenamepy = "timepix_geometry_correction.timepix_geometry_correction:gui"
 
 [project.urls]
 homepage = "https://github.com/ornlneutronimaging/timepix_geometry_correction"
@@ -102,7 +100,6 @@ conda-pypi-map = { "conda-forge" = "pixi-mapping.json" }
 # Conda package dependencies
 numpy = "*"
 matplotlib = ">=3.9.1,<4"
-dxchange = ">=0.1.8,<0.2"
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
