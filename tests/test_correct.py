@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from timepix_geometry_correction import chip_size
-from timepix_geometry_correction.config import config
+from timepix_geometry_correction.config import default_config_timepix1 as config
 from timepix_geometry_correction.correct import TimepixGeometryCorrection
 from timepix_geometry_correction.loading import load_tiff_image
 
@@ -205,13 +205,29 @@ class TestTimepixGeometryCorrection:
         test_image = corrected.copy()
 
         # Test that the gap correction methods don't crash
-        corrector.correct_between_chips_1_and_2(config, test_image)
-        corrector.correct_between_chips_2_and_3(config, test_image)
-        corrector.correct_between_chips_1_and_4(config, test_image)
-        corrector.correct_between_chips_3_and_4(config, test_image)
+        corrector.correct_between_chips_1_and_2(test_image)
+        corrector.correct_between_chips_2_and_3(test_image)
+        corrector.correct_between_chips_1_and_4(test_image)
+        corrector.correct_between_chips_3_and_4(test_image)
 
         # The image should still have the same shape
         assert test_image.shape == corrected.shape
+
+    def test_provide_custom_config(self, sample_image):
+        """Test that a custom configuration can be provided."""
+        custom_config = {
+            "chip1": {"xoffset": 5, "yoffset": 10},
+            "chip2": {"xoffset": 5, "yoffset": 10},
+            "chip3": {"xoffset": 5, "yoffset": 10},
+            "chip4": {"xoffset": 5, "yoffset": 10},
+        }
+        corrector = TimepixGeometryCorrection(raw_image=sample_image, config=custom_config)
+        corrected = corrector.correct()
+
+        # Check that the corrected image is produced with the custom config
+        assert corrected is not None
+        assert corrected.shape == (512 + 10, 512 + 5)
+        assert np.all(corrected[100, 5:10] == [5, 6, 7, 8, 9])  # Check that the gap is filled
 
 
 def test_config_integrity():
