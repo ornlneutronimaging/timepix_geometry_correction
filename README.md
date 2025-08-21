@@ -1,5 +1,6 @@
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ornlneutronimaging/timepix_geometry_correction/main.svg)](https://results.pre-commit.ci/latest/github/ornlneutronimaging/timepix_geometry_correction/main)
-[![PyPI version](https://pypi.org/project/timepix-geometry-correction/)](https://img.shields.io/pypi/v/timepix-geometry-correction)
+[![PyPI version](https://badge.fury.io/py/timepix-geometry-correction.svg)]([https://badge.fury.io/py/NeuNorm](https://img.shields.io/pypi/v/timepix-geometry-correction))
+
 
 ## Getting Started
 
