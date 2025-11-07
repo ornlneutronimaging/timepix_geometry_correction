@@ -67,8 +67,8 @@ class TestTimepixGeometryCorrection:
         corrected = corrector.correct()
 
         # Check output dimensions
-        expected_height = sample_image.shape[0] + max([config[chip]["yoffset"] for chip in config])
-        expected_width = sample_image.shape[1] + max([config[chip]["xoffset"] for chip in config])
+        expected_height = sample_image.shape[0] + int(np.ceil(max([config[chip]["yoffset"] for chip in config])))
+        expected_width = sample_image.shape[1] + int(np.ceil(max([config[chip]["xoffset"] for chip in config])))
         assert corrected.shape == (1, expected_height, expected_width)
 
         # Check that output is not all zeros
@@ -83,8 +83,8 @@ class TestTimepixGeometryCorrection:
         original = load_tiff_image(siemens_star_path)
 
         # Check output dimensions
-        expected_height = original.shape[0] + max([config[chip]["yoffset"] for chip in config])
-        expected_width = original.shape[1] + max([config[chip]["xoffset"] for chip in config])
+        expected_height = original.shape[0] + int(np.ceil(max([config[chip]["yoffset"] for chip in config])))
+        expected_width = original.shape[1] + int(np.ceil(max([config[chip]["xoffset"] for chip in config])))
         assert corrected.shape == (1, expected_height, expected_width)
 
         # Check that output is not all zeros
