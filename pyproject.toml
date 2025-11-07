@@ -10,6 +10,7 @@ license = { text = "MIT" }
 keywords = ["neutrons", "timepix", "geometry", "correction"]
 readme = "README.md"
 
+
 dependencies = [
   # Dependencies available from both PyPI and conda should be listed here
   "numpy>=2.2,<3",
@@ -100,6 +101,9 @@ conda-pypi-map = { "conda-forge" = "pixi-mapping.json" }
 # Conda package dependencies
 numpy = "*"
 matplotlib = ">=3.9.1,<4"
+scipy = ">=1.16.1,<2"
+scikit-image = ">=0.25.2,<0.26"
+ipywidgets = ">=8.1.7,<9"
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
