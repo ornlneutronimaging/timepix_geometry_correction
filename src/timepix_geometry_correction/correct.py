@@ -134,24 +134,28 @@ class TimepixGeometryCorrection:
         config = self.config
         chip_size = self.chip_size
 
-        for _y in range(0, chip_size[0] + int(np.ceil(config["chip1"]["yoffset"]))):
+        # Precompute ceiled offsets to avoid repeated computation in loop
+        xoffset_ceiled = int(np.ceil(config["chip1"]["xoffset"]))
+        yoffset_ceiled = int(np.ceil(config["chip1"]["yoffset"]))
+
+        for _y in range(0, chip_size[0] + yoffset_ceiled):
             left_value = new_image[_y, chip_size[0] - 1]
-            right_value = new_image[_y, chip_size[0] + int(np.ceil(config["chip1"]["xoffset"]))]
+            right_value = new_image[_y, chip_size[0] + xoffset_ceiled]
 
             if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(int(np.ceil(config["chip1"]["xoffset"])))
+                list_new_value = np.zeros(xoffset_ceiled)
             if left_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip1"]["xoffset"]))) * right_value
+                list_new_value = np.ones(xoffset_ceiled) * right_value
             elif right_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip1"]["xoffset"]))) * left_value
+                list_new_value = np.ones(xoffset_ceiled) * left_value
             else:
                 list_new_value = np.interp(
-                    np.arange(1, int(np.ceil(config["chip1"]["xoffset"])) + 1),
-                    [0, int(np.ceil(config["chip1"]["xoffset"])) + 1],
+                    np.arange(1, xoffset_ceiled + 1),
+                    [0, xoffset_ceiled + 1],
                     [left_value, right_value],
                 )
 
-            new_image[_y, chip_size[1] : chip_size[1] + int(np.ceil(config["chip1"]["xoffset"]))] = list_new_value
+            new_image[_y, chip_size[1] : chip_size[1] + xoffset_ceiled] = list_new_value
 
     def correct_between_chips_2_and_3(self, new_image):
         # between chips 2 and 3
@@ -160,23 +164,27 @@ class TimepixGeometryCorrection:
         config = self.config
         chip_size = self.chip_size
 
-        for _x in range(0, chip_size[1] + int(np.ceil(config["chip3"]["xoffset"]))):
+        # Precompute ceiled offsets to avoid repeated computation in loop
+        xoffset_ceiled = int(np.ceil(config["chip3"]["xoffset"]))
+        yoffset_ceiled = int(np.ceil(config["chip3"]["yoffset"]))
+
+        for _x in range(0, chip_size[1] + xoffset_ceiled):
             left_value = new_image[chip_size[0] - 1, _x]
-            right_value = new_image[chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])), _x]
+            right_value = new_image[chip_size[0] + yoffset_ceiled, _x]
             if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(int(np.ceil(config["chip3"]["yoffset"])))
+                list_new_value = np.zeros(yoffset_ceiled)
             if left_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip3"]["yoffset"]))) * right_value
+                list_new_value = np.ones(yoffset_ceiled) * right_value
             elif right_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip3"]["yoffset"]))) * left_value
+                list_new_value = np.ones(yoffset_ceiled) * left_value
             else:
                 list_new_value = np.interp(
-                    np.arange(1, int(np.ceil(config["chip3"]["yoffset"])) + 1),
-                    [0, int(np.ceil(config["chip3"]["yoffset"])) + 1],
+                    np.arange(1, yoffset_ceiled + 1),
+                    [0, yoffset_ceiled + 1],
                     [left_value, right_value],
                 )
 
-            new_image[chip_size[0] : chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])), _x] = list_new_value
+            new_image[chip_size[0] : chip_size[0] + yoffset_ceiled, _x] = list_new_value
 
     def correct_between_chips_1_and_4(self, new_image):
         # between chips 1 and 4
@@ -186,29 +194,34 @@ class TimepixGeometryCorrection:
         config = self.config
         chip_size = self.chip_size
 
+        # Precompute ceiled offsets to avoid repeated computation in loop
+        chip1_xoffset_ceiled = int(np.ceil(config["chip1"]["xoffset"]))
+        chip1_yoffset_ceiled = int(np.ceil(config["chip1"]["yoffset"]))
+        chip4_yoffset_ceiled = int(np.ceil(config["chip4"]["yoffset"]))
+
         for _x in range(
-            chip_size[1] + int(np.ceil(config["chip1"]["xoffset"])),
-            2 * chip_size[1] + int(np.ceil(config["chip1"]["xoffset"])) - 3,
+            chip_size[1] + chip1_xoffset_ceiled,
+            2 * chip_size[1] + chip1_xoffset_ceiled - 3,
         ):
             left_value = new_image[chip_size[0] - 2 + config["chip1"]["yoffset"], _x]
-            right_value = new_image[chip_size[0] + int(np.ceil(config["chip4"]["yoffset"])), _x]
+            right_value = new_image[chip_size[0] + chip4_yoffset_ceiled, _x]
             if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(int(np.ceil(config["chip4"]["yoffset"])))
+                list_new_value = np.zeros(chip4_yoffset_ceiled)
             if left_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip4"]["yoffset"]))) * right_value
+                list_new_value = np.ones(chip4_yoffset_ceiled) * right_value
             elif right_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip4"]["yoffset"]))) * left_value
+                list_new_value = np.ones(chip4_yoffset_ceiled) * left_value
             else:
                 list_new_value = np.interp(
-                    np.arange(1, int(np.ceil(config["chip4"]["yoffset"]) + 1)),
-                    [0, int(np.ceil(config["chip4"]["yoffset"])) + int(np.ceil(config["chip1"]["yoffset"])) + 1],
+                    np.arange(1, chip4_yoffset_ceiled + 1),
+                    [0, chip4_yoffset_ceiled + chip1_yoffset_ceiled + 1],
                     [left_value, right_value],
                 )
 
             new_image[
-                chip_size[0] + int(np.ceil(config["chip1"]["yoffset"])) - 1 : chip_size[0]
-                + int(np.ceil(config["chip4"]["yoffset"]))
-                + int(np.ceil(config["chip1"]["yoffset"]))
+                chip_size[0] + chip1_yoffset_ceiled - 1 : chip_size[0]
+                + chip4_yoffset_ceiled
+                + chip1_yoffset_ceiled
                 - 1,
                 _x,
             ] = list_new_value
@@ -217,26 +230,30 @@ class TimepixGeometryCorrection:
         config = self.config
         chip_size = self.chip_size
 
+        # Precompute ceiled offsets to avoid repeated computation in loop
+        chip3_yoffset_ceiled = int(np.ceil(config["chip3"]["yoffset"]))
+        chip4_xoffset_ceiled = int(np.ceil(config["chip4"]["xoffset"]))
+
         for _y in range(
-            int(chip_size[0] + np.ceil(config["chip3"]["yoffset"]) + config["chip1"]["yoffset"]),
-            int(2 * chip_size[0] + np.ceil(config["chip3"]["yoffset"]) + config["chip1"]["yoffset"] - 2),
+            int(chip_size[0] + chip3_yoffset_ceiled + config["chip1"]["yoffset"]),
+            int(2 * chip_size[0] + chip3_yoffset_ceiled + config["chip1"]["yoffset"] - 2),
         ):
             left_value = new_image[_y, chip_size[1] - 1]
-            right_value = new_image[_y, chip_size[1] + int(np.ceil(config["chip4"]["xoffset"]))]
+            right_value = new_image[_y, chip_size[1] + chip4_xoffset_ceiled]
             if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(int(np.ceil(config["chip4"]["xoffset"])))
+                list_new_value = np.zeros(chip4_xoffset_ceiled)
             if left_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip4"]["xoffset"]))) * right_value
+                list_new_value = np.ones(chip4_xoffset_ceiled) * right_value
             elif right_value == 0:
-                list_new_value = np.ones(int(np.ceil(config["chip4"]["xoffset"]))) * left_value
+                list_new_value = np.ones(chip4_xoffset_ceiled) * left_value
             else:
                 list_new_value = np.interp(
-                    np.arange(1, int(np.ceil(config["chip4"]["xoffset"])) + 1),
-                    [0, int(np.ceil(config["chip4"]["xoffset"])) + 1],
+                    np.arange(1, chip4_xoffset_ceiled + 1),
+                    [0, chip4_xoffset_ceiled + 1],
                     [left_value, right_value],
                 )
 
-            new_image[_y, chip_size[1] : chip_size[1] + int(np.ceil(config["chip4"]["xoffset"]))] = list_new_value
+            new_image[_y, chip_size[1] : chip_size[1] + chip4_xoffset_ceiled] = list_new_value
 
     def correct_center_area(self, new_image):
         chip_size = self.chip_size
