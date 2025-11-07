@@ -14,7 +14,9 @@ readme = "README.md"
 dependencies = [
   # Dependencies available from both PyPI and conda should be listed here
   "numpy>=2.2,<3",
-  "hatchling",
+  "scipy>=1.14,<2",
+  "matplotlib>=3.9,<4",
+  "pillow>=10.0",
   # Dependencies only available from PyPI
 ]
 
