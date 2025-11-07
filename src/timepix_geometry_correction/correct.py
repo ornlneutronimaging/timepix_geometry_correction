@@ -234,8 +234,8 @@ class TimepixGeometryCorrection:
         chip_size = self.chip_size
 
         for _y in range(
-            chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])) + config["chip1"]["yoffset"],
-            2 * chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])) + config["chip1"]["yoffset"] - 2,
+            chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])) + int(np.ceil(config["chip1"]["yoffset"])),
+            2 * chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])) + int(np.ceil(config["chip1"]["yoffset"])) - 2,
         ):
             left_value = new_image[_y, chip_size[1] - 1]
             right_value = new_image[_y, chip_size[1] + int(np.ceil(config["chip4"]["xoffset"]))]
