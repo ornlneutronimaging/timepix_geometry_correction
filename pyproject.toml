@@ -19,12 +19,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-docs = [
-  "sphinx>=8.2.1,<9",
-  "sphinx_rtd_theme>=3.0.1,<4",
-  "versioningit",
-  "myst_parser",
-]
+docs = ["sphinx", "sphinx_rtd_theme", "versioningit"]
 
 [project.scripts]
 packagename-cli = "timepix_geometry_correction.timepix_geometry_correction:main"
@@ -163,8 +158,9 @@ ruff = "*"
 versioningit = "*"
 
 [tool.pixi.feature.docs.dependencies]
-sphinx = ">=8.2.1,<9"
-sphinx_rtd_theme = ">=3.0.1,<4"
+sphinx = ">=7.0,<8"      # Constrained to <8 for myst-parser compatibility
+sphinx_rtd_theme = "*"
+myst-parser = ">=3.0,<4" # Latest stable version compatible with Sphinx 7
 
 [tool.pixi.feature.jupyter.dependencies]
 jupyterlab = "*"
