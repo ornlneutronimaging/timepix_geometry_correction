@@ -125,7 +125,7 @@ class TimepixGeometryCorrection:
         self.correct_between_chips_3_and_4(new_image)
         self.correct_center_area(new_image)
 
-        return new_image
+        return new_image.astype(image.dtype)
 
     def correct_between_chips_1_and_2(self, new_image):
         # between chips 1 and 2, we need to correct the gap
@@ -160,23 +160,23 @@ class TimepixGeometryCorrection:
         config = self.config
         chip_size = self.chip_size
 
-        for _x in range(0, chip_size[1] + config["chip3"]["xoffset"]):
+        for _x in range(0, chip_size[1] + int(np.ceil(config["chip3"]["xoffset"]))):
             left_value = new_image[chip_size[0] - 1, _x]
-            right_value = new_image[chip_size[0] + config["chip3"]["yoffset"], _x]
+            right_value = new_image[chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])), _x]
             if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(config["chip3"]["yoffset"])
+                list_new_value = np.zeros(int(np.ceil(config["chip3"]["yoffset"])))
             if left_value == 0:
-                list_new_value = np.ones(config["chip3"]["yoffset"]) * right_value
+                list_new_value = np.ones(int(np.ceil(config["chip3"]["yoffset"]))) * right_value
             elif right_value == 0:
-                list_new_value = np.ones(config["chip3"]["yoffset"]) * left_value
+                list_new_value = np.ones(int(np.ceil(config["chip3"]["yoffset"]))) * left_value
             else:
                 list_new_value = np.interp(
-                    np.arange(1, config["chip3"]["yoffset"] + 1),
-                    [0, config["chip3"]["yoffset"] + 1],
+                    np.arange(1, int(np.ceil(config["chip3"]["yoffset"])) + 1),
+                    [0, int(np.ceil(config["chip3"]["yoffset"])) + 1],
                     [left_value, right_value],
                 )
 
-            new_image[chip_size[0] : chip_size[0] + config["chip3"]["yoffset"], _x] = list_new_value
+            new_image[chip_size[0] : chip_size[0] + int(np.ceil(config["chip3"]["yoffset"])), _x] = list_new_value
 
     def correct_between_chips_1_and_4(self, new_image):
         # between chips 1 and 4
@@ -218,13 +218,13 @@ class TimepixGeometryCorrection:
         chip_size = self.chip_size
 
         for _y in range(
-            chip_size[0] + np.ceil(config["chip3"]["yoffset"]) + config["chip1"]["yoffset"],
-            2 * chip_size[0] + np.ceil(config["chip3"]["yoffset"]) + config["chip1"]["yoffset"] - 2,
+            int(chip_size[0] + np.ceil(config["chip3"]["yoffset"]) + config["chip1"]["yoffset"]),
+            int(2 * chip_size[0] + np.ceil(config["chip3"]["yoffset"]) + config["chip1"]["yoffset"] - 2),
         ):
             left_value = new_image[_y, chip_size[1] - 1]
             right_value = new_image[_y, chip_size[1] + int(np.ceil(config["chip4"]["xoffset"]))]
             if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(config["chip4"]["xoffset"])
+                list_new_value = np.zeros(int(np.ceil(config["chip4"]["xoffset"])))
             if left_value == 0:
                 list_new_value = np.ones(int(np.ceil(config["chip4"]["xoffset"]))) * right_value
             elif right_value == 0:
@@ -239,13 +239,14 @@ class TimepixGeometryCorrection:
             new_image[_y, chip_size[1] : chip_size[1] + int(np.ceil(config["chip4"]["xoffset"]))] = list_new_value
 
     def correct_center_area(self, new_image):
-        for _x in range(256, 259):
-            left_value = new_image[255, _x]
-            right_value = new_image[258, _x]
+        chip_size = self.chip_size
+        for _x in range(chip_size[1], chip_size[1] + 3):
+            left_value = new_image[chip_size[0] - 1, _x]
+            right_value = new_image[chip_size[0] + 2, _x]
 
             list_new_value = np.interp(np.arange(1, 4), [0, 4], [left_value, right_value])
 
-            new_image[256:259, _x] = list_new_value
+            new_image[chip_size[0] : chip_size[0] + 3, _x] = list_new_value
 
 
 if __name__ == "__main__":
