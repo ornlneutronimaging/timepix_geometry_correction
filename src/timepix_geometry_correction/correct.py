@@ -78,7 +78,7 @@ class TimepixGeometryCorrection:
     def apply_shift_correction(self, image, shift_config):
         # Preserve the original dtype
         original_dtype = image.dtype
-        
+
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
 
@@ -86,39 +86,46 @@ class TimepixGeometryCorrection:
         chip_size = self.chip_size
         max_y_offset = max([int(np.ceil(shift_config[chip]["yoffset"])) for chip in shift_config])
         max_x_offset = max([int(np.ceil(shift_config[chip]["xoffset"])) for chip in shift_config])
-        
+
         new_height = image.shape[0] + max_y_offset
         new_width = image.shape[1] + max_x_offset
-        
+
         # create an empty array for new image with the expanded size and same dtype
         new_image = np.zeros((new_height, new_width), dtype=original_dtype)
 
         # chip 2 (reference chip, no offset)
-        new_image[0:chip_size[0], 0:chip_size[1]] = image[0:chip_size[0], 0:chip_size[1]]
+        new_image[0 : chip_size[0], 0 : chip_size[1]] = image[0 : chip_size[0], 0 : chip_size[1]]
 
         # chip 1 (top right)
-        region = image[0:chip_size[0], chip_size[1]:]
+        region = image[0 : chip_size[0], chip_size[1] :]
         chips1_shift = (shift_config["chip1"]["yoffset"], shift_config["chip1"]["xoffset"])
         shifted_data = shift(region, shift=chips1_shift, order=3)
         y_offset = int(np.ceil(shift_config["chip1"]["yoffset"]))
         x_offset = int(np.ceil(shift_config["chip1"]["xoffset"]))
-        new_image[y_offset:y_offset + chip_size[0], chip_size[1] + x_offset:chip_size[1] + x_offset + chip_size[1]] = shifted_data.astype(original_dtype)
+        new_image[
+            y_offset : y_offset + chip_size[0], chip_size[1] + x_offset : chip_size[1] + x_offset + chip_size[1]
+        ] = shifted_data.astype(original_dtype)
 
         # chip 3 (bottom left)
-        region = image[chip_size[0]:, 0:chip_size[1]]
+        region = image[chip_size[0] :, 0 : chip_size[1]]
         chips3_shift = (shift_config["chip3"]["yoffset"], shift_config["chip3"]["xoffset"])
         shifted_data = shift(region, shift=chips3_shift, order=3)
         y_offset = int(np.ceil(shift_config["chip3"]["yoffset"]))
         x_offset = int(np.ceil(shift_config["chip3"]["xoffset"]))
-        new_image[chip_size[0] + y_offset:chip_size[0] + y_offset + chip_size[0], x_offset:x_offset + chip_size[1]] = shifted_data.astype(original_dtype)
+        new_image[
+            chip_size[0] + y_offset : chip_size[0] + y_offset + chip_size[0], x_offset : x_offset + chip_size[1]
+        ] = shifted_data.astype(original_dtype)
 
         # chip 4 (bottom right)
-        region = image[chip_size[0]:, chip_size[1]:]
+        region = image[chip_size[0] :, chip_size[1] :]
         chips4_shift = (shift_config["chip4"]["yoffset"], shift_config["chip4"]["xoffset"])
         shifted_data = shift(region, shift=chips4_shift, order=3)
         y_offset = int(np.ceil(shift_config["chip4"]["yoffset"]))
         x_offset = int(np.ceil(shift_config["chip4"]["xoffset"]))
-        new_image[chip_size[0] + y_offset:chip_size[0] + y_offset + chip_size[0], chip_size[1] + x_offset:chip_size[1] + x_offset + chip_size[1]] = shifted_data.astype(original_dtype)
+        new_image[
+            chip_size[0] + y_offset : chip_size[0] + y_offset + chip_size[0],
+            chip_size[1] + x_offset : chip_size[1] + x_offset + chip_size[1],
+        ] = shifted_data.astype(original_dtype)
 
         return new_image
 
@@ -257,13 +264,13 @@ class TimepixGeometryCorrection:
     def correct_center_area(self, new_image):
         chip_size = self.chip_size
         config = self.config
-        
+
         # Calculate the center gap region dynamically based on chip_size and offsets
         y_start = chip_size[0]
         y_end = chip_size[0] + int(np.ceil(config["chip3"]["yoffset"]))
         x_start = chip_size[1]
         x_end = chip_size[1] + int(np.ceil(config["chip1"]["xoffset"]))
-        
+
         # Only apply correction if there's a gap to fill
         if y_end > y_start and x_end > x_start:
             for _x in range(x_start, x_end):
@@ -272,9 +279,7 @@ class TimepixGeometryCorrection:
                     right_value = new_image[y_end, _x]
 
                     list_new_value = np.interp(
-                        np.arange(1, y_end - y_start + 1),
-                        [0, y_end - y_start + 1],
-                        [left_value, right_value]
+                        np.arange(1, y_end - y_start + 1), [0, y_end - y_start + 1], [left_value, right_value]
                     )
 
                     new_image[y_start:y_end, _x] = list_new_value
