@@ -19,12 +19,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-docs = [
-  "sphinx>=8.2.1,<9",
-  "sphinx_rtd_theme>=3.0.1,<4",
-  "versioningit",
-  "myst_parser",
-]
+docs = ["sphinx", "sphinx_rtd_theme", "versioningit"]
 
 [project.scripts]
 packagename-cli = "timepix_geometry_correction.timepix_geometry_correction:main"
@@ -104,6 +99,9 @@ matplotlib = ">=3.9.1,<4"
 scipy = ">=1.16.1,<2"
 scikit-image = ">=0.25.2,<0.26"
 ipywidgets = ">=8.1.7,<9"
+# Security: Fix vulnerabilities
+brotli = ">=1.2.0" # CVE-2025-6176: DoS via decompression bomb
+h2 = ">=4.3.0"     # CVE-2025-57804: HTTP Request Smuggling
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
@@ -153,15 +151,16 @@ hatch = "*"
 toml-cli = "*"
 
 [tool.pixi.feature.developer.dependencies]
-pip = "*"
+pip = ">=25.2"     # CVE-2025-8869: Awaiting fix in 25.3 (not yet released)
 pip-audit = "*"
 pre-commit = "*"
 ruff = "*"
 versioningit = "*"
 
 [tool.pixi.feature.docs.dependencies]
-sphinx = ">=8.2.1,<9"
-sphinx_rtd_theme = ">=3.0.1,<4"
+sphinx = ">=7.0,<8"      # Constrained to <8 for myst-parser compatibility
+sphinx_rtd_theme = "*"
+myst-parser = ">=3.0,<4" # Latest stable version compatible with Sphinx 7
 
 [tool.pixi.feature.jupyter.dependencies]
 jupyterlab = "*"
@@ -193,7 +192,7 @@ conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .c
   "conda-build",
 ] }
 # Misc
-audit-deps = { cmd = "pip-audit --local -s osv", description = "Audit the package dependencies for vulnerabilities" }
+audit-deps = { cmd = "pip-audit --local -s osv --ignore-vuln GHSA-4xh5-x5gv-qwph", description = "Audit the package dependencies for vulnerabilities" }
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__', description = "Clean up various caches and build artifacts" }
 clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }
