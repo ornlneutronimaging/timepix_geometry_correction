@@ -8,8 +8,8 @@ on:
     tags: ["v*"]
 
 env:
-  PKG_NAME: examplepyapp
-  MODULE_NAME: packagenamepy
+  PKG_NAME: timepix_geometry_correction
+  MODULE_NAME: timepix_geometry_correction
 
 jobs:
   tests:
