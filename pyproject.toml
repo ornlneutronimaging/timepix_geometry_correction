@@ -120,10 +120,10 @@ numpy = "*"
 
 [tool.pixi.package]
 name = "timepix_geometry_correction"
-version = "0.0.0"                    # placeholder, overwritten by sync-version
+version = "0.2.0.dev44"              # placeholder, overwritten by sync-version
 
 [tool.pixi.package.build]
-backend = { name = "pixi-build-python", version = "0.1.*" }
+backend = { name = "pixi-build-python", version = "*" }
 
 # Environments and Features
 

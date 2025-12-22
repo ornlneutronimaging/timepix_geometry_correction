@@ -7016,8 +7016,8 @@ packages:
   timestamp: 1760696502467
 - pypi: ./
   name: timepix-geometry-correction
-  version: 0.2.0.dev42
-  sha256: fa6bef74257dd79ae198a4169a034e04d68546ce5dc7c478dc04242c091577b4
+  version: 0.2.0.dev44
+  sha256: 3f7b90f131c7478ce0becf3bf733915e78dc0f72c370d00446b0b732af1c96df
   requires_dist:
   - hatchling
   - numpy>=2.2,<3
