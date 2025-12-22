@@ -102,7 +102,7 @@ ipywidgets = ">=8.1.7,<9"
 # Security: Fix vulnerabilities
 brotli = ">=1.2.0"    # CVE-2025-6176: DoS via decompression bomb
 h2 = ">=4.3.0"        # CVE-2025-57804: HTTP Request Smuggling
-filelock = ">=3.12.2" # CVE-2024-5276: Symlink Attack Vulnerability
+filelock = ">=3.20.1" # GHSA-w853-jp5j-5j7f
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
