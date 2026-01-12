@@ -27,6 +27,13 @@ jobs:
         with:
           pixi-version: v0.62.2
           manifest-path: pyproject.toml
+          run-install: false
+
+      - name: Install dependencies (skip local package)
+        run: pixi install --frozen --skip timepix_geometry_correction
+
+      - name: Install local package with dynamic versioning
+        run: pixi run pip install --no-deps -e .
 
       - name: Run unit tests
         run: pixi run test
@@ -56,6 +63,13 @@ jobs:
         with:
           pixi-version: v0.62.2
           manifest-path: pyproject.toml
+          run-install: false
+
+      - name: Install dependencies (skip local package)
+        run: pixi install --frozen --skip timepix_geometry_correction
+
+      - name: Install local package with dynamic versioning
+        run: pixi run pip install --no-deps -e .
 
       - name: Build conda package
         run: |
@@ -93,6 +107,13 @@ jobs:
         with:
           pixi-version: v0.62.2
           manifest-path: pyproject.toml
+          run-install: false
+
+      - name: Install dependencies (skip local package)
+        run: pixi install --frozen --skip timepix_geometry_correction
+
+      - name: Install local package with dynamic versioning
+        run: pixi run pip install --no-deps -e .
 
       - name: Download conda package artifact
         uses: actions/download-artifact@v7
@@ -129,6 +150,13 @@ jobs:
         with:
           pixi-version: v0.62.2
           manifest-path: pyproject.toml
+          run-install: false
+
+      - name: Install dependencies (skip local package)
+        run: pixi install --frozen --skip timepix_geometry_correction
+
+      - name: Install local package with dynamic versioning
+        run: pixi run pip install --no-deps -e .
 
       - name: Build pypi package
         run: |
