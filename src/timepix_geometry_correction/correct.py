@@ -203,7 +203,8 @@ class TimepixGeometryCorrection:
             chip_size[1] + chip1_xoffset_ceiled,
             2 * chip_size[1] + chip1_xoffset_ceiled - 3,
         ):
-            left_value = new_image[chip_size[0] - 2 + config["chip1"]["yoffset"], _x]
+            # left_value = new_image[chip_size[0] - 2 + config["chip1"]["yoffset"], _x]
+            left_value = new_image[chip_size[0] + chip1_yoffset_ceiled - 1, _x]
             right_value = new_image[chip_size[0] + chip4_yoffset_ceiled, _x]
             if left_value == 0 and right_value == 0:
                 list_new_value = np.zeros(chip4_yoffset_ceiled)
