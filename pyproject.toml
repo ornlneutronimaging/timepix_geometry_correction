@@ -86,6 +86,7 @@ channels = [
   "https://prefix.dev/pixi-build-backends", # Required for pixi build
 ]
 platforms = ["linux-64", "osx-arm64"] # add additional platforms as needed
+#platforms = ["linux-64"] # add additional platforms as needed
 # If you don't need to map PyPI dependencies to conda, you can remove the `conda-pypi-map` section and the `pixi-mapping.json` file.
 conda-pypi-map = { "conda-forge" = "pixi-mapping.json" }
 
@@ -102,6 +103,7 @@ ipywidgets = ">=8.1.7,<9"
 # Security: Fix vulnerabilities
 brotli = ">=1.2.0"       # CVE-2025-6176: DoS via decompression bomb
 h2 = ">=4.3.0"           # CVE-2025-57804: HTTP Request Smuggling
+ipykernel = ">=7.1.0,<8"
 filelock = ">=3.20.3"    # GHSA-qmgc-5h2g-mvrw: TOCTOU symlink vulnerability in SoftFileLock
 urllib3 = ">=2.6.3"      # GHSA-38jv-5279-wg99
 virtualenv = ">=20.36.1" # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability
