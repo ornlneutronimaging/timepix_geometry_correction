@@ -86,6 +86,7 @@ channels = [
   "https://prefix.dev/pixi-build-backends", # Required for pixi build
 ]
 platforms = ["linux-64", "osx-arm64"] # add additional platforms as needed
+#platforms = ["linux-64"] # add additional platforms as needed
 # If you don't need to map PyPI dependencies to conda, you can remove the `conda-pypi-map` section and the `pixi-mapping.json` file.
 conda-pypi-map = { "conda-forge" = "pixi-mapping.json" }
 
