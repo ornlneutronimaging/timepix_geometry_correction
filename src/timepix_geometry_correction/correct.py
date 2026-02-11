@@ -5,8 +5,56 @@ from scipy.ndimage import shift
 from timepix_geometry_correction.config import default_config_timepix1
 from timepix_geometry_correction.loading import load_tiff_image
 
+chip_size = (256, 256)
+
 
 class TimepixGeometryCorrection:
+    """Apply geometry corrections to Timepix quad-chip detector images.
+
+    A Timepix quad-chip detector is composed of four 256 × 256 pixel chips
+    arranged in a 2 × 2 grid::
+
+        +--------+--------+
+        | chip 2 | chip 1 |
+        | (ref)  | (top R)|
+        +--------+--------+
+        | chip 3 | chip 4 |
+        | (bot L)| (bot R)|
+        +--------+--------+
+
+    Manufacturing tolerances cause slight misalignments between chips.
+    This class corrects those misalignments by:
+
+    1. **Shift correction** – translating each chip by its measured
+       (xoffset, yoffset) using cubic spline interpolation.
+    2. **Gap interpolation** – filling the resulting inter-chip gaps
+       with linearly (and bilinearly at the centre) interpolated values.
+
+    Parameters
+    ----------
+    raw_images : numpy.ndarray or list of numpy.ndarray, optional
+        One or more 512 × 512 raw detector images provided as arrays.
+    images_path : str or list of str, optional
+        File path(s) to TIFF images on disk.  Mutually exclusive with
+        *raw_images*.
+    config : dict, optional
+        Per-chip offset configuration.  Each key (``"chip1"`` … ``"chip4"``)
+        maps to a dict with ``"xoffset"`` and ``"yoffset"`` (in pixels).
+        Defaults to :data:`default_config_timepix1` when *None*.
+
+    Raises
+    ------
+    ValueError
+        If neither *raw_images* nor *images_path* is supplied.
+
+    Examples
+    --------
+    >>> corrector = TimepixGeometryCorrection(
+    ...     images_path="data/siemens_star.tif"
+    ... )
+    >>> corrected = corrector.correct()
+    """
+
     list_images = None
     list_images_path = None
 
@@ -33,7 +81,31 @@ class TimepixGeometryCorrection:
             self.config = config
 
     def correct(self, display=False):
-        # Apply geometric corrections to the event using self.raw_image or self.raw_image_path
+        """Run the full correction pipeline on every loaded image.
+
+        For each image the method applies, in order:
+
+        1. Sub-pixel shift correction (see :meth:`apply_shift_correction`).
+        2. Inter-chip gap interpolation (see :meth:`apply_interpolation_correction`).
+
+        Parameters
+        ----------
+        display : bool, optional
+            If *True*, show a side-by-side matplotlib plot of the original and
+            corrected image for every file loaded from disk.  Has no effect
+            when images are supplied as arrays.  Default is *False*.
+
+        Returns
+        -------
+        corrected_list_images : numpy.ndarray
+            3-D array of shape ``(N, H, W)`` where *N* is the number of
+            images and *H × W* is the corrected image size.
+
+        Raises
+        ------
+        ValueError
+            If neither raw images nor image paths were provided at init.
+        """
 
         if self.list_images is not None:
             self.chip_size = (self.list_images[0].shape[0] // 2, self.list_images[0].shape[1] // 2)
@@ -75,7 +147,49 @@ class TimepixGeometryCorrection:
         else:
             raise ValueError("No raw image or path provided for correction.")
 
+    def apply_correction(self, image):
+        """Apply the complete geometry correction to a single image.
+
+        Sequentially runs shift correction followed by gap interpolation.
+
+        Parameters
+        ----------
+        image : numpy.ndarray
+            A 2-D raw detector image (typically 512 × 512).
+
+        Returns
+        -------
+        numpy.ndarray
+            The corrected image with inter-chip gaps filled.
+        """
+        image = self.apply_shift_correction(image, self.config)
+        image = self.apply_interpolation_correction(image, self.config)
+        return image
+
     def apply_shift_correction(self, image, shift_config):
+        """Translate each chip by its configured (x, y) offset.
+
+        Chip 2 (top-left) is used as the fixed reference.  The remaining
+        three chips are shifted using :func:`scipy.ndimage.shift` with
+        third-order (cubic) spline interpolation so that sub-pixel offsets
+        are handled smoothly.
+
+        Parameters
+        ----------
+        image : numpy.ndarray
+            A 2-D raw detector image.  NaN and Inf values are replaced
+            with 0 before processing.
+        shift_config : dict
+            Per-chip offset dictionary.  Each entry must contain
+            ``"xoffset"`` (column shift) and ``"yoffset"`` (row shift)
+            in pixel units.
+
+        Returns
+        -------
+        new_image : numpy.ndarray
+            Image with each chip shifted to its corrected position.
+            Gaps created by the shifts are zero-filled at this stage.
+        """
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
 
@@ -106,165 +220,216 @@ class TimepixGeometryCorrection:
 
         return new_image
 
-    def apply_correction(self, image):
-        if self.chip_size is None:
-            self.chip_size = (image.shape[0] // 2, image.shape[1] // 2)
+    def interpolate_vertical_chip2_chip1_gap(self, filled, h, w, x_gap_top):
+        """Fill the vertical gap in the top row (between chip 2 and chip 1).
 
-        # data = {
-        #     "chip1": image[0 : self.chip_size[0], self.chip_size[1] :],
-        #     "chip2": image[0 : self.chip_size[0], 0 : self.chip_size[1]],
-        #     "chip3": image[self.chip_size[0] :, 0 : self.chip_size[1]],
-        #     "chip4": image[self.chip_size[0] :, self.chip_size[1] :],
-        # }
+        Linearly interpolates along each row between the last column of
+        chip 2 and the first column of chip 1 to fill
+        ``filled[0:h, w:w+x_gap_top]``.
 
-        new_image = self.apply_shift_correction(image, self.config)
+        Parameters
+        ----------
+        filled : numpy.ndarray
+            Mutable 2-D image array (modified in-place).
+        h : int
+            Chip height in pixels (typically 256).
+        w : int
+            Chip width in pixels (typically 256).
+        x_gap_top : int
+            Width of the gap (number of pixel columns) between chip 2
+            and chip 1.
+        """
+        if x_gap_top > 0:
+            left = filled[0:h, w - 1]
+            right = filled[0:h, w + x_gap_top]
+            for i in range(x_gap_top):
+                t = (i + 1) / (x_gap_top + 1)
+                filled[0:h, w + i] = (1 - t) * left + t * right
 
-        self.correct_between_chips_1_and_2(new_image)
-        self.correct_between_chips_2_and_3(new_image)
-        self.correct_between_chips_1_and_4(new_image)
-        self.correct_between_chips_3_and_4(new_image)
-        self.correct_center_area(new_image)
+    def interpolate_horizontal_chip2_chip3_gap(self, filled, h, w, y_gap_left):
+        """Fill the horizontal gap in the left column (between chip 2 and chip 3).
 
-        return new_image.astype(image.dtype)
+        Linearly interpolates along each column between the last row of
+        chip 2 and the first row of chip 3 to fill
+        ``filled[h:h+y_gap_left, 0:w]``.
 
-    def correct_between_chips_1_and_2(self, new_image):
-        # between chips 1 and 2, we need to correct the gap
-        # gap is config['chip1']['xoffset'] (horizontal) and config['chip1']['yoffset'] (vertical)
-        # y will go from 0 to self.chip_size[0] + config['chip1']['yoffset']
-        config = self.config
-        chip_size = self.chip_size
+        Parameters
+        ----------
+        filled : numpy.ndarray
+            Mutable 2-D image array (modified in-place).
+        h : int
+            Chip height in pixels.
+        w : int
+            Chip width in pixels.
+        y_gap_left : int
+            Height of the gap (number of pixel rows) between chip 2
+            and chip 3.
+        """
+        if y_gap_left > 0:
+            above = filled[h - 1, 0:w]
+            below = filled[h + y_gap_left, 0:w]
+            for j in range(y_gap_left):
+                t = (j + 1) / (y_gap_left + 1)
+                filled[h + j, 0:w] = (1 - t) * above + t * below
 
-        # Precompute ceiled offsets to avoid repeated computation in loop
-        xoffset_ceiled = int(np.ceil(config["chip1"]["xoffset"]))
-        yoffset_ceiled = int(np.ceil(config["chip1"]["yoffset"]))
+    def interpolate_horizontal_chip1_chip4_gap(self, filled, h, w, y_gap_right, max_x_gap):
+        """Fill the horizontal gap in the right column (between chip 1 and chip 4).
 
-        for _y in range(0, chip_size[0] + yoffset_ceiled):
-            left_value = new_image[_y, chip_size[0] - 1]
-            right_value = new_image[_y, chip_size[0] + xoffset_ceiled]
+        Linearly interpolates along each column between the last row of
+        chip 1 and the first row of chip 4, covering
+        ``filled[h:h+y_gap_right, w+max_x_gap:2*w]``.
+        The corner region (``cols w:w+max_x_gap``) is excluded here and
+        handled by :meth:`interpolate_corner_intersection`.
 
-            if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(xoffset_ceiled)
-            if left_value == 0:
-                list_new_value = np.ones(xoffset_ceiled) * right_value
-            elif right_value == 0:
-                list_new_value = np.ones(xoffset_ceiled) * left_value
-            else:
-                list_new_value = np.interp(
-                    np.arange(1, xoffset_ceiled + 1),
-                    [0, xoffset_ceiled + 1],
-                    [left_value, right_value],
-                )
+        Parameters
+        ----------
+        filled : numpy.ndarray
+            Mutable 2-D image array (modified in-place).
+        h : int
+            Chip height in pixels.
+        w : int
+            Chip width in pixels.
+        y_gap_right : int
+            Height of the gap (number of pixel rows) between chip 1
+            and chip 4.
+        max_x_gap : int
+            Maximum horizontal gap across both top and bottom chip pairs.
+            Used to avoid overwriting the corner intersection region.
+        """
+        if y_gap_right > 0:
+            above = filled[h - 1, w + max_x_gap : 2 * w]
+            below = filled[h + y_gap_right, w + max_x_gap : 2 * w]
+            for j in range(y_gap_right):
+                t = (j + 1) / (y_gap_right + 1)
+                filled[h + j, w + max_x_gap : 2 * w] = (1 - t) * above + t * below
 
-            new_image[_y, chip_size[1] : chip_size[1] + xoffset_ceiled] = list_new_value
+    def interpolate_vertical_chip3_chip4_gap(self, filled, h, w, x_gap_bot, max_y_gap):
+        """Fill the vertical gap in the bottom row (between chip 3 and chip 4).
 
-    def correct_between_chips_2_and_3(self, new_image):
-        # between chips 2 and 3
-        # gap is config['chip3']['xoffset'] (horizontal) and config['chip3']['yoffset'] (vertical)
-        # x will go from 0 to chip_size[1] + config['chip3']['xoffset']
-        config = self.config
-        chip_size = self.chip_size
+        Linearly interpolates along each row between the last column of
+        chip 3 and the first column of chip 4, covering
+        ``filled[h+max_y_gap:2*h, w:w+x_gap_bot]``.
+        The corner region (``rows h:h+max_y_gap``) is excluded here and
+        handled by :meth:`interpolate_corner_intersection`.
 
-        # Precompute ceiled offsets to avoid repeated computation in loop
-        xoffset_ceiled = int(np.ceil(config["chip3"]["xoffset"]))
-        yoffset_ceiled = int(np.ceil(config["chip3"]["yoffset"]))
+        Parameters
+        ----------
+        filled : numpy.ndarray
+            Mutable 2-D image array (modified in-place).
+        h : int
+            Chip height in pixels.
+        w : int
+            Chip width in pixels.
+        x_gap_bot : int
+            Width of the gap (number of pixel columns) between chip 3
+            and chip 4.
+        max_y_gap : int
+            Maximum vertical gap across both left and right chip pairs.
+            Used to avoid overwriting the corner intersection region.
+        """
+        if x_gap_bot > 0:
+            left = filled[h + max_y_gap : 2 * h, w - 1]
+            right = filled[h + max_y_gap : 2 * h, w + x_gap_bot]
+            for i in range(x_gap_bot):
+                t = (i + 1) / (x_gap_bot + 1)
+                filled[h + max_y_gap : 2 * h, w + i] = (1 - t) * left + t * right
 
-        for _x in range(0, chip_size[1] + xoffset_ceiled):
-            left_value = new_image[chip_size[0] - 1, _x]
-            right_value = new_image[chip_size[0] + yoffset_ceiled, _x]
-            if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(yoffset_ceiled)
-            if left_value == 0:
-                list_new_value = np.ones(yoffset_ceiled) * right_value
-            elif right_value == 0:
-                list_new_value = np.ones(yoffset_ceiled) * left_value
-            else:
-                list_new_value = np.interp(
-                    np.arange(1, yoffset_ceiled + 1),
-                    [0, yoffset_ceiled + 1],
-                    [left_value, right_value],
-                )
+    def interpolate_corner_intersection(self, filled, h, w, max_x_gap, max_y_gap):
+        """Fill the central corner where all four chips meet.
 
-            new_image[chip_size[0] : chip_size[0] + yoffset_ceiled, _x] = list_new_value
+        Uses bilinear interpolation from the four nearest corner pixels
+        (one from each chip) to smoothly fill the rectangular region
+        ``filled[h:h+max_y_gap, w:w+max_x_gap]``.
 
-    def correct_between_chips_1_and_4(self, new_image):
-        # between chips 1 and 4
-        # gap is config['chip4']['xoffset'] - config['chip1']['xoffset']
-        # (horizontal) and config['chip4']['yoffset'] - config['chip1']['yoffset'] (vertical)
-        # x will go from chip_size[1]+config['chip1']['xoffset'] to 2*chip_size[1]+config['chip1']['xoffset']
-        config = self.config
-        chip_size = self.chip_size
+        Parameters
+        ----------
+        filled : numpy.ndarray
+            Mutable 2-D image array (modified in-place).
+        h : int
+            Chip height in pixels.
+        w : int
+            Chip width in pixels.
+        max_x_gap : int
+            Width of the corner region (max horizontal gap).
+        max_y_gap : int
+            Height of the corner region (max vertical gap).
 
-        # Precompute ceiled offsets to avoid repeated computation in loop
-        chip1_xoffset_ceiled = int(np.ceil(config["chip1"]["xoffset"]))
-        chip1_yoffset_ceiled = int(np.ceil(config["chip1"]["yoffset"]))
-        chip4_yoffset_ceiled = int(np.ceil(config["chip4"]["yoffset"]))
+        Notes
+        -----
+        The four anchor pixels used for bilinear weighting are:
 
-        for _x in range(
-            chip_size[1] + chip1_xoffset_ceiled,
-            2 * chip_size[1] + chip1_xoffset_ceiled - 3,
-        ):
-            # left_value = new_image[chip_size[0] - 2 + config["chip1"]["yoffset"], _x]
-            left_value = new_image[chip_size[0] + chip1_yoffset_ceiled - 1, _x]
-            right_value = new_image[chip_size[0] + chip4_yoffset_ceiled, _x]
-            if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(chip4_yoffset_ceiled)
-            if left_value == 0:
-                list_new_value = np.ones(chip4_yoffset_ceiled) * right_value
-            elif right_value == 0:
-                list_new_value = np.ones(chip4_yoffset_ceiled) * left_value
-            else:
-                list_new_value = np.interp(
-                    np.arange(1, chip4_yoffset_ceiled + 1),
-                    [0, chip4_yoffset_ceiled + chip1_yoffset_ceiled + 1],
-                    [left_value, right_value],
-                )
+        - **top-left**  : ``filled[h-1, w-1]``        (chip 2 corner)
+        - **top-right** : ``filled[h-1, w+max_x_gap]`` (chip 1 edge)
+        - **bottom-left** : ``filled[h+max_y_gap, w-1]`` (chip 3 edge)
+        - **bottom-right**: ``filled[h+max_y_gap, w+max_x_gap]`` (chip 4 corner)
+        """
+        if max_x_gap > 0 and max_y_gap > 0:
+            tl = filled[h - 1, w - 1]  # chip 2 corner
+            tr = filled[h - 1, w + max_x_gap]  # chip 1 side
+            bl = filled[h + max_y_gap, w - 1]  # chip 3 side
+            br = filled[h + max_y_gap, w + max_x_gap]  # chip 4 corner
 
-            new_image[
-                chip_size[0] + chip1_yoffset_ceiled - 1 : chip_size[0]
-                + chip4_yoffset_ceiled
-                + chip1_yoffset_ceiled
-                - 1,
-                _x,
-            ] = list_new_value
+            for j in range(max_y_gap):
+                ty = (j + 1) / (max_y_gap + 1)
+                for i in range(max_x_gap):
+                    tx = (i + 1) / (max_x_gap + 1)
+                    filled[h + j, w + i] = (
+                        tl * (1 - tx) * (1 - ty) + tr * tx * (1 - ty) + bl * (1 - tx) * ty + br * tx * ty
+                    )
 
-    def correct_between_chips_3_and_4(self, new_image):
-        config = self.config
-        chip_size = self.chip_size
+    def apply_interpolation_correction(self, image, shift_config):
+        """Fill gaps between shifted chips using linear interpolation.
 
-        # Precompute ceiled offsets to avoid repeated computation in loop
-        chip3_yoffset_ceiled = int(np.ceil(config["chip3"]["yoffset"]))
-        chip4_xoffset_ceiled = int(np.ceil(config["chip4"]["xoffset"]))
+        After shift correction, zero-filled gaps appear at chip boundaries
+        wherever a chip was translated away from its neighbour.  This method
+        fills those gaps in five steps:
 
-        for _y in range(
-            int(chip_size[0] + chip3_yoffset_ceiled + config["chip1"]["yoffset"]),
-            int(2 * chip_size[0] + chip3_yoffset_ceiled + config["chip1"]["yoffset"] - 2),
-        ):
-            left_value = new_image[_y, chip_size[1] - 1]
-            right_value = new_image[_y, chip_size[1] + chip4_xoffset_ceiled]
-            if left_value == 0 and right_value == 0:
-                list_new_value = np.zeros(chip4_xoffset_ceiled)
-            if left_value == 0:
-                list_new_value = np.ones(chip4_xoffset_ceiled) * right_value
-            elif right_value == 0:
-                list_new_value = np.ones(chip4_xoffset_ceiled) * left_value
-            else:
-                list_new_value = np.interp(
-                    np.arange(1, chip4_xoffset_ceiled + 1),
-                    [0, chip4_xoffset_ceiled + 1],
-                    [left_value, right_value],
-                )
+        1. Vertical gap in the top row (chip 2 | chip 1) — linear.
+        2. Horizontal gap in the left column (chip 2 / chip 3) — linear.
+        3. Horizontal gap in the right column (chip 1 / chip 4) — linear.
+        4. Vertical gap in the bottom row (chip 3 | chip 4) — linear.
+        5. Central corner intersection — bilinear.
 
-            new_image[_y, chip_size[1] : chip_size[1] + chip4_xoffset_ceiled] = list_new_value
+        Parameters
+        ----------
+        image : numpy.ndarray
+            2-D shift-corrected image containing zero-filled gaps.
+        shift_config : dict
+            Per-chip offset dictionary (same format as the class *config*).
 
-    def correct_center_area(self, new_image):
-        chip_size = self.chip_size
-        for _x in range(chip_size[1], chip_size[1] + 3):
-            left_value = new_image[chip_size[0] - 1, _x]
-            right_value = new_image[chip_size[0] + 2, _x]
+        Returns
+        -------
+        filled : numpy.ndarray
+            Copy of *image* with all inter-chip gaps filled by
+            interpolation.
 
-            list_new_value = np.interp(np.arange(1, 4), [0, 4], [left_value, right_value])
+        See Also
+        --------
+        interpolate_vertical_chip2_chip1_gap : Step 1.
+        interpolate_horizontal_chip2_chip3_gap : Step 2.
+        interpolate_horizontal_chip1_chip4_gap : Step 3.
+        interpolate_vertical_chip3_chip4_gap : Step 4.
+        interpolate_corner_intersection : Step 5.
+        """
+        filled = image.copy().astype(float)
+        h, w = chip_size
 
-            new_image[chip_size[0] : chip_size[0] + 3, _x] = list_new_value
+        # Offsets that define the gap sizes at each boundary
+        x_gap_top = shift_config["chip1"]["xoffset"]  # vertical gap width  (top half)
+        y_gap_left = shift_config["chip3"]["yoffset"]  # horizontal gap height (left half)
+        x_gap_bot = shift_config["chip4"]["xoffset"]  # vertical gap width  (bottom half)
+        y_gap_right = shift_config["chip4"]["yoffset"]  # horizontal gap height (right half)
+
+        max_x_gap = max(x_gap_top, x_gap_bot)
+        max_y_gap = max(y_gap_left, y_gap_right)
+
+        self.interpolate_vertical_chip2_chip1_gap(filled, h, w, x_gap_top)
+        self.interpolate_horizontal_chip2_chip3_gap(filled, h, w, y_gap_left)
+        self.interpolate_horizontal_chip1_chip4_gap(filled, h, w, y_gap_right, max_x_gap)
+        self.interpolate_vertical_chip3_chip4_gap(filled, h, w, x_gap_bot, max_y_gap)
+        self.interpolate_corner_intersection(filled, h, w, max_x_gap, max_y_gap)
+
+        return filled
 
 
 if __name__ == "__main__":
