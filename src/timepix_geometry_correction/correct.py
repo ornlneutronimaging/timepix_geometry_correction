@@ -162,9 +162,10 @@ class TimepixGeometryCorrection:
         numpy.ndarray
             The corrected image with inter-chip gaps filled.
         """
+        original_dtype = image.dtype
         image = self.apply_shift_correction(image, self.config)
         image = self.apply_interpolation_correction(image, self.config)
-        return image
+        return image.astype(original_dtype, copy=False)
 
     def apply_shift_correction(self, image, shift_config):
         """Translate each chip by its configured (x, y) offset.
