@@ -414,12 +414,18 @@ class TimepixGeometryCorrection:
         filled = image.copy().astype(float)
         h, w = chip_size
 
-        # Offsets that define the gap sizes at each boundary
-        x_gap_top = shift_config["chip1"]["xoffset"]  # vertical gap width  (top half)
-        y_gap_left = shift_config["chip3"]["yoffset"]  # horizontal gap height (left half)
-        x_gap_bot = shift_config["chip4"]["xoffset"]  # vertical gap width  (bottom half)
-        y_gap_right = shift_config["chip4"]["yoffset"]  # horizontal gap height (right half)
+        # Offsets that define the gap sizes at each boundary. These offsets may be
+        # fractional (sub-pixel), but gap sizes used for indexing/interpolation
+        # must be integers, so we derive integer gap widths/heights here.
+        x_offset_top = shift_config["chip1"]["xoffset"]   # vertical gap width  (top half)
+        y_offset_left = shift_config["chip3"]["yoffset"]  # horizontal gap height (left half)
+        x_offset_bot = shift_config["chip4"]["xoffset"]   # vertical gap width  (bottom half)
+        y_offset_right = shift_config["chip4"]["yoffset"] # horizontal gap height (right half)
 
+        x_gap_top = int(round(x_offset_top))
+        y_gap_left = int(round(y_offset_left))
+        x_gap_bot = int(round(x_offset_bot))
+        y_gap_right = int(round(y_offset_right))
         max_x_gap = max(x_gap_top, x_gap_bot)
         max_y_gap = max(y_gap_left, y_gap_right)
 
