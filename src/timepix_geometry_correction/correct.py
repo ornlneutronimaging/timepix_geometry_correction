@@ -421,10 +421,10 @@ class TimepixGeometryCorrection:
         # Offsets that define the gap sizes at each boundary. These offsets may be
         # fractional (sub-pixel), but gap sizes used for indexing/interpolation
         # must be integers, so we derive integer gap widths/heights here.
-        x_offset_top = shift_config["chip1"]["xoffset"]   # vertical gap width  (top half)
+        x_offset_top = shift_config["chip1"]["xoffset"]  # vertical gap width  (top half)
         y_offset_left = shift_config["chip3"]["yoffset"]  # horizontal gap height (left half)
-        x_offset_bot = shift_config["chip4"]["xoffset"]   # vertical gap width  (bottom half)
-        y_offset_right = shift_config["chip4"]["yoffset"] # horizontal gap height (right half)
+        x_offset_bot = shift_config["chip4"]["xoffset"]  # vertical gap width  (bottom half)
+        y_offset_right = shift_config["chip4"]["yoffset"]  # horizontal gap height (right half)
 
         x_gap_top = int(round(x_offset_top))
         y_gap_left = int(round(y_offset_left))
