@@ -412,7 +412,10 @@ class TimepixGeometryCorrection:
         interpolate_corner_intersection : Step 5.
         """
         filled = image.copy().astype(float)
-        h, w = chip_size
+        if self.chip_size is not None:
+            h, w = self.chip_size
+        else:
+            h, w = chip_size
 
         # Offsets that define the gap sizes at each boundary. These offsets may be
         # fractional (sub-pixel), but gap sizes used for indexing/interpolation
