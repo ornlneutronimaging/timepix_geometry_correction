@@ -101,12 +101,6 @@ scipy = ">=1.16.1,<2"
 scikit-image = ">=0.25.2,<0.26"
 ipywidgets = ">=8.1.7,<9"
 # Security: Fix vulnerabilities
-brotli = ">=1.2.0"       # CVE-2025-6176: DoS via decompression bomb
-h2 = ">=4.3.0"           # CVE-2025-57804: HTTP Request Smuggling
-ipykernel = ">=7.1.0,<8"
-filelock = ">=3.20.3"    # GHSA-qmgc-5h2g-mvrw: TOCTOU symlink vulnerability in SoftFileLock
-urllib3 = ">=2.6.3"      # GHSA-38jv-5279-wg99
-virtualenv = ">=20.36.1" # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability
 astropy = ">=7.2.0,<8"
 
 [tool.pixi.pypi-dependencies]

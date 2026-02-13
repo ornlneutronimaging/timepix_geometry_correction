@@ -7,6 +7,8 @@ from timepix_geometry_correction.loading import load_tiff_image
 
 chip_size = (256, 256)
 
+chip_size = (256, 256)
+
 
 class TimepixGeometryCorrection:
     """Apply geometry corrections to Timepix quad-chip detector images.
@@ -85,6 +87,31 @@ class TimepixGeometryCorrection:
             self.config = config
 
     def correct(self, display=False):
+        """Run the full correction pipeline on every loaded image.
+
+        For each image the method applies, in order:
+
+        1. Sub-pixel shift correction (see :meth:`apply_shift_correction`).
+        2. Inter-chip gap interpolation (see :meth:`apply_interpolation_correction`).
+
+        Parameters
+        ----------
+        display : bool, optional
+            If *True*, show a side-by-side matplotlib plot of the original and
+            corrected image for every file loaded from disk.  Has no effect
+            when images are supplied as arrays.  Default is *False*.
+
+        Returns
+        -------
+        corrected_list_images : numpy.ndarray
+            3-D array of shape ``(N, H, W)`` where *N* is the number of
+            images and *H × W* is the corrected image size.
+
+        Raises
+        ------
+        ValueError
+            If neither raw images nor image paths were provided at init.
+        """
         """Run the full correction pipeline on every loaded image.
 
         For each image the method applies, in order:
