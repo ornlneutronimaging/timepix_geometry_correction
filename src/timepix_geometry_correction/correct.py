@@ -449,6 +449,20 @@ class TimepixGeometryCorrection:
         filled = image.copy().astype(float)
         h, w = chip_size
 
+        # WARNING: Using module-level chip_size constant (256, 256) instead of self.chip_size.
+        # This assumes all input images are 512x512 with 256x256 chips. For non-standard
+        # image sizes, gap interpolation will occur at incorrect boundaries.
+        if self.chip_size is not None and self.chip_size != chip_size:
+            import warnings
+
+            warnings.warn(
+                f"apply_interpolation_correction is using hardcoded chip_size {chip_size} "
+                f"but actual image has chip_size {self.chip_size}. "
+                f"Gap interpolation may be incorrect for non-512x512 images.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         # Offsets that define the gap sizes at each boundary.
         # Float offsets are rounded up so the gap spans enough whole pixels.
         x_gap_top = int(np.ceil(shift_config["chip1"]["xoffset"]))  # vertical gap width  (top half)
