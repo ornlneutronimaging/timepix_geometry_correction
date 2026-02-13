@@ -107,6 +107,7 @@ ipykernel = ">=7.1.0,<8"
 filelock = ">=3.20.3"    # GHSA-qmgc-5h2g-mvrw: TOCTOU symlink vulnerability in SoftFileLock
 urllib3 = ">=2.6.3"      # GHSA-38jv-5279-wg99
 virtualenv = ">=20.36.1" # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability
+astropy = ">=7.2.0,<8"
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs

@@ -26,9 +26,12 @@ class TimepixGeometryCorrection:
     This class corrects those misalignments by:
 
     1. **Shift correction** – translating each chip by its measured
-       (xoffset, yoffset) using cubic spline interpolation.
+       (xoffset, yoffset) using cubic spline interpolation.  Both integer
+       and float (sub-pixel) offsets are supported.
     2. **Gap interpolation** – filling the resulting inter-chip gaps
        with linearly (and bilinearly at the centre) interpolated values.
+       When offsets are floats, gap sizes are rounded up (``ceil``) to
+       the nearest integer number of pixels.
 
     Parameters
     ----------
@@ -39,8 +42,9 @@ class TimepixGeometryCorrection:
         *raw_images*.
     config : dict, optional
         Per-chip offset configuration.  Each key (``"chip1"`` … ``"chip4"``)
-        maps to a dict with ``"xoffset"`` and ``"yoffset"`` (in pixels).
-        Defaults to :data:`default_config_timepix1` when *None*.
+        maps to a dict with ``"xoffset"`` and ``"yoffset"`` (in pixels,
+        int or float).  Defaults to :data:`default_config_timepix1` when
+        *None*.
 
     Raises
     ------
@@ -182,7 +186,8 @@ class TimepixGeometryCorrection:
         shift_config : dict
             Per-chip offset dictionary.  Each entry must contain
             ``"xoffset"`` (column shift) and ``"yoffset"`` (row shift)
-            in pixel units.
+            in pixel units (int or float).  Float offsets are handled
+            via cubic spline interpolation for sub-pixel accuracy.
 
         Returns
         -------
@@ -193,30 +198,31 @@ class TimepixGeometryCorrection:
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
 
+        h, w = image.shape[0] // 2, image.shape[1] // 2
+
         # create an empty array for new image
-        # new_image = np.zeros_like(image)
         new_image = np.zeros((image.shape[0], image.shape[1]))
 
         # chip 2 (fixed one)
-        new_image[0:256, 0:256] = image[0:256, 0:256]
+        new_image[0:h, 0:w] = image[0:h, 0:w]
 
         # chip 1
-        region = image[0:256, 256:]
+        region = image[0:h, w:]
         chips1_shift = (shift_config["chip1"]["yoffset"], shift_config["chip1"]["xoffset"])
         shifted_data = shift(region, shift=chips1_shift, order=3)
-        new_image[0:256, 256:] = shifted_data
+        new_image[0:h, w:] = shifted_data
 
         # chip 3
-        region = image[256:, 0:256]
+        region = image[h:, 0:w]
         chips3_shift = (shift_config["chip3"]["yoffset"], shift_config["chip3"]["xoffset"])
         shifted_data = shift(region, shift=chips3_shift, order=3)
-        new_image[256:, 0:256] = shifted_data
+        new_image[h:, 0:w] = shifted_data
 
         # chip 4
-        region = image[256:, 256:]
+        region = image[h:, w:]
         chips4_shift = (shift_config["chip4"]["yoffset"], shift_config["chip4"]["xoffset"])
         shifted_data = shift(region, shift=chips4_shift, order=3)
-        new_image[256:, 256:] = shifted_data
+        new_image[h:, w:] = shifted_data
 
         return new_image
 
@@ -396,6 +402,8 @@ class TimepixGeometryCorrection:
             2-D shift-corrected image containing zero-filled gaps.
         shift_config : dict
             Per-chip offset dictionary (same format as the class *config*).
+            Float offsets are supported; gap sizes are computed as
+            ``ceil(offset)``.
 
         Returns
         -------
@@ -414,11 +422,12 @@ class TimepixGeometryCorrection:
         filled = image.copy().astype(float)
         h, w = chip_size
 
-        # Offsets that define the gap sizes at each boundary
-        x_gap_top = shift_config["chip1"]["xoffset"]  # vertical gap width  (top half)
-        y_gap_left = shift_config["chip3"]["yoffset"]  # horizontal gap height (left half)
-        x_gap_bot = shift_config["chip4"]["xoffset"]  # vertical gap width  (bottom half)
-        y_gap_right = shift_config["chip4"]["yoffset"]  # horizontal gap height (right half)
+        # Offsets that define the gap sizes at each boundary.
+        # Float offsets are rounded up so the gap spans enough whole pixels.
+        x_gap_top = int(np.ceil(shift_config["chip1"]["xoffset"]))  # vertical gap width  (top half)
+        y_gap_left = int(np.ceil(shift_config["chip3"]["yoffset"]))  # horizontal gap height (left half)
+        x_gap_bot = int(np.ceil(shift_config["chip4"]["xoffset"]))  # vertical gap width  (bottom half)
+        y_gap_right = int(np.ceil(shift_config["chip4"]["yoffset"]))  # horizontal gap height (right half)
 
         max_x_gap = max(x_gap_top, x_gap_bot)
         max_y_gap = max(y_gap_left, y_gap_right)
