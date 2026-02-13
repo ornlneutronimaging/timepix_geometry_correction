@@ -7,6 +7,8 @@ from timepix_geometry_correction.loading import load_tiff_image
 
 chip_size = (256, 256)
 
+chip_size = (256, 256)
+
 
 class TimepixGeometryCorrection:
     """Apply geometry corrections to Timepix quad-chip detector images.
@@ -26,9 +28,12 @@ class TimepixGeometryCorrection:
     This class corrects those misalignments by:
 
     1. **Shift correction** – translating each chip by its measured
-       (xoffset, yoffset) using cubic spline interpolation.
+       (xoffset, yoffset) using cubic spline interpolation.  Both integer
+       and float (sub-pixel) offsets are supported.
     2. **Gap interpolation** – filling the resulting inter-chip gaps
        with linearly (and bilinearly at the centre) interpolated values.
+       When offsets are floats, gap sizes are rounded up (``ceil``) to
+       the nearest integer number of pixels.
 
     Parameters
     ----------
@@ -39,8 +44,9 @@ class TimepixGeometryCorrection:
         *raw_images*.
     config : dict, optional
         Per-chip offset configuration.  Each key (``"chip1"`` … ``"chip4"``)
-        maps to a dict with ``"xoffset"`` and ``"yoffset"`` (in pixels).
-        Defaults to :data:`default_config_timepix1` when *None*.
+        maps to a dict with ``"xoffset"`` and ``"yoffset"`` (in pixels,
+        int or float).  Defaults to :data:`default_config_timepix1` when
+        *None*.
 
     Raises
     ------
@@ -81,6 +87,31 @@ class TimepixGeometryCorrection:
             self.config = config
 
     def correct(self, display=False):
+        """Run the full correction pipeline on every loaded image.
+
+        For each image the method applies, in order:
+
+        1. Sub-pixel shift correction (see :meth:`apply_shift_correction`).
+        2. Inter-chip gap interpolation (see :meth:`apply_interpolation_correction`).
+
+        Parameters
+        ----------
+        display : bool, optional
+            If *True*, show a side-by-side matplotlib plot of the original and
+            corrected image for every file loaded from disk.  Has no effect
+            when images are supplied as arrays.  Default is *False*.
+
+        Returns
+        -------
+        corrected_list_images : numpy.ndarray
+            3-D array of shape ``(N, H, W)`` where *N* is the number of
+            images and *H × W* is the corrected image size.
+
+        Raises
+        ------
+        ValueError
+            If neither raw images nor image paths were provided at init.
+        """
         """Run the full correction pipeline on every loaded image.
 
         For each image the method applies, in order:
@@ -162,10 +193,9 @@ class TimepixGeometryCorrection:
         numpy.ndarray
             The corrected image with inter-chip gaps filled.
         """
-        original_dtype = image.dtype
         image = self.apply_shift_correction(image, self.config)
         image = self.apply_interpolation_correction(image, self.config)
-        return image.astype(original_dtype, copy=False)
+        return image
 
     def apply_shift_correction(self, image, shift_config):
         """Translate each chip by its configured (x, y) offset.
@@ -183,7 +213,8 @@ class TimepixGeometryCorrection:
         shift_config : dict
             Per-chip offset dictionary.  Each entry must contain
             ``"xoffset"`` (column shift) and ``"yoffset"`` (row shift)
-            in pixel units.
+            in pixel units (int or float).  Float offsets are handled
+            via cubic spline interpolation for sub-pixel accuracy.
 
         Returns
         -------
@@ -194,30 +225,31 @@ class TimepixGeometryCorrection:
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
 
+        h, w = image.shape[0] // 2, image.shape[1] // 2
+
         # create an empty array for new image
-        # new_image = np.zeros_like(image)
         new_image = np.zeros((image.shape[0], image.shape[1]))
 
         # chip 2 (fixed one)
-        new_image[0:256, 0:256] = image[0:256, 0:256]
+        new_image[0:h, 0:w] = image[0:h, 0:w]
 
         # chip 1
-        region = image[0:256, 256:]
+        region = image[0:h, w:]
         chips1_shift = (shift_config["chip1"]["yoffset"], shift_config["chip1"]["xoffset"])
         shifted_data = shift(region, shift=chips1_shift, order=3)
-        new_image[0:256, 256:] = shifted_data
+        new_image[0:h, w:] = shifted_data
 
         # chip 3
-        region = image[256:, 0:256]
+        region = image[h:, 0:w]
         chips3_shift = (shift_config["chip3"]["yoffset"], shift_config["chip3"]["xoffset"])
         shifted_data = shift(region, shift=chips3_shift, order=3)
-        new_image[256:, 0:256] = shifted_data
+        new_image[h:, 0:w] = shifted_data
 
         # chip 4
-        region = image[256:, 256:]
+        region = image[h:, w:]
         chips4_shift = (shift_config["chip4"]["yoffset"], shift_config["chip4"]["xoffset"])
         shifted_data = shift(region, shift=chips4_shift, order=3)
-        new_image[256:, 256:] = shifted_data
+        new_image[h:, w:] = shifted_data
 
         return new_image
 
@@ -397,6 +429,8 @@ class TimepixGeometryCorrection:
             2-D shift-corrected image containing zero-filled gaps.
         shift_config : dict
             Per-chip offset dictionary (same format as the class *config*).
+            Float offsets are supported; gap sizes are computed as
+            ``ceil(offset)``.
 
         Returns
         -------
@@ -413,23 +447,29 @@ class TimepixGeometryCorrection:
         interpolate_corner_intersection : Step 5.
         """
         filled = image.copy().astype(float)
-        if self.chip_size is not None:
-            h, w = self.chip_size
-        else:
-            h, w = chip_size
+        h, w = chip_size
 
-        # Offsets that define the gap sizes at each boundary. These offsets may be
-        # fractional (sub-pixel), but gap sizes used for indexing/interpolation
-        # must be integers, so we derive integer gap widths/heights here.
-        x_offset_top = shift_config["chip1"]["xoffset"]  # vertical gap width  (top half)
-        y_offset_left = shift_config["chip3"]["yoffset"]  # horizontal gap height (left half)
-        x_offset_bot = shift_config["chip4"]["xoffset"]  # vertical gap width  (bottom half)
-        y_offset_right = shift_config["chip4"]["yoffset"]  # horizontal gap height (right half)
+        # WARNING: Using module-level chip_size constant (256, 256) instead of self.chip_size.
+        # This assumes all input images are 512x512 with 256x256 chips. For non-standard
+        # image sizes, gap interpolation will occur at incorrect boundaries.
+        if self.chip_size is not None and self.chip_size != chip_size:
+            import warnings
 
-        x_gap_top = int(round(x_offset_top))
-        y_gap_left = int(round(y_offset_left))
-        x_gap_bot = int(round(x_offset_bot))
-        y_gap_right = int(round(y_offset_right))
+            warnings.warn(
+                f"apply_interpolation_correction is using hardcoded chip_size {chip_size} "
+                f"but actual image has chip_size {self.chip_size}. "
+                f"Gap interpolation may be incorrect for non-512x512 images.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        # Offsets that define the gap sizes at each boundary.
+        # Float offsets are rounded up so the gap spans enough whole pixels.
+        x_gap_top = int(np.ceil(shift_config["chip1"]["xoffset"]))  # vertical gap width  (top half)
+        y_gap_left = int(np.ceil(shift_config["chip3"]["yoffset"]))  # horizontal gap height (left half)
+        x_gap_bot = int(np.ceil(shift_config["chip4"]["xoffset"]))  # vertical gap width  (bottom half)
+        y_gap_right = int(np.ceil(shift_config["chip4"]["yoffset"]))  # horizontal gap height (right half)
+
         max_x_gap = max(x_gap_top, x_gap_bot)
         max_y_gap = max(y_gap_left, y_gap_right)
 

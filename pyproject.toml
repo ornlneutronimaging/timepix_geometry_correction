@@ -109,6 +109,7 @@ urllib3 = ">=2.6.3"       # GHSA-38jv-5279-wg99
 virtualenv = ">=20.36.1"  # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability
 cryptography = ">=46.0.5" # CVE-2026-26007
 pillow = ">=12.1.1"       # CVE-2026-25990
+astropy = ">=7.2.0,<8"
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
