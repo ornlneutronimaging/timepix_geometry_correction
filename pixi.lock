@@ -6308,7 +6308,7 @@ packages:
   timestamp: 1769690244546
 - pypi: ./
   name: timepix-geometry-correction
-  version: 0.2.0.dev56
+  version: 0.2.0.dev50
   sha256: 1597a882eb64ec92f20ec3ac502d71a33051e96e7b6d130416033a9172e502c5
   requires_dist:
   - hatchling
@@ -6317,6 +6317,7 @@ packages:
   - sphinx-rtd-theme ; extra == 'docs'
   - versioningit ; extra == 'docs'
   requires_python: '>=3.10'
+  editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/tinycss2-1.5.1-pyhcf101f3_0.conda
   sha256: 7c803480dbfb8b536b9bf6287fa2aa0a4f970f8c09075694174eb4550a4524cd
   md5: c0d0b883e97906f7524e2aac94be0e0d
