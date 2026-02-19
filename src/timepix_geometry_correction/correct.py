@@ -70,6 +70,8 @@ class TimepixGeometryCorrection:
         if raw_images is not None:
             if isinstance(raw_images, list):
                 self.list_images = raw_images
+            elif isinstance(raw_images, np.ndarray) and raw_images.ndim == 3:
+                self.list_images = raw_images
             else:
                 self.list_images = [raw_images]
 
