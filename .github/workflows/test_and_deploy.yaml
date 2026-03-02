@@ -116,7 +116,7 @@ jobs:
         run: pixi run pip install --no-deps -e .
 
       - name: Download conda package artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: artifact-conda-package
 
