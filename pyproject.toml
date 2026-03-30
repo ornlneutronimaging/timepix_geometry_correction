@@ -107,7 +107,9 @@ ipykernel = ">=7.1.0,<8"
 filelock = ">=3.20.3"        # GHSA-qmgc-5h2g-mvrw: TOCTOU symlink vulnerability in SoftFileLock
 urllib3 = ">=2.6.3"          # GHSA-38jv-5279-wg99
 virtualenv = ">=20.36.1,<21" # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability; capped <21 until hatch >=1.16.5 lands on conda-forge (see #48)
-cryptography = ">=46.0.5"    # CVE-2026-26007
+cryptography = ">=46.0.5"    # CVE-2026-26007; 46.0.6 (CVE-2026-34073) not yet on conda-forge
+pygments = ">=2.20.0"        # CVE-2026-4539
+requests = ">=2.33.0"        # CVE-2026-25645
 pillow = ">=12.1.1"          # CVE-2026-25990
 pyjwt = ">=2.12.0"           # CVE-2026-32597
 astropy = ">=7.2.0,<8"
@@ -201,7 +203,7 @@ conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .c
   "conda-build",
 ] }
 # Misc
-audit-deps = { cmd = "pip-audit --local -s osv --ignore-vuln GHSA-4xh5-x5gv-qwph --ignore-vuln GHSA-78cv-mqj4-43f7 --ignore-vuln CVE-2026-31958", description = "Audit the package dependencies for vulnerabilities (tornado ignores temporary until 6.5.5 on conda-forge)" }
+audit-deps = { cmd = "pip-audit --local -s osv --ignore-vuln GHSA-4xh5-x5gv-qwph --ignore-vuln GHSA-78cv-mqj4-43f7 --ignore-vuln CVE-2026-31958 --ignore-vuln CVE-2026-34073", description = "Audit the package dependencies for vulnerabilities (tornado 6.5.5, cryptography 46.0.6 not yet on conda-forge)" }
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__', description = "Clean up various caches and build artifacts" }
 clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }
