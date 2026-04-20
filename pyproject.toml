@@ -110,7 +110,7 @@ virtualenv = ">=20.36.1,<21" # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability
 cryptography = ">=46.0.7"    # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892
 pygments = ">=2.20.0"        # CVE-2026-4539
 requests = ">=2.33.0"        # CVE-2026-25645
-pillow = ">=12.1.1"          # CVE-2026-25990
+pillow = ">=12.2.0"          # CVE-2026-25990, CVE-2026-40192
 pyjwt = ">=2.12.0"           # CVE-2026-32597
 astropy = ">=7.2.0,<8"
 aiohttp = ">=3.13.4"         # CVE-2026-34514 and 9 others
