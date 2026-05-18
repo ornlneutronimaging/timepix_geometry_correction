@@ -105,7 +105,7 @@ brotli = ">=1.2.0"           # CVE-2025-6176: DoS via decompression bomb
 h2 = ">=4.3.0"               # CVE-2025-57804: HTTP Request Smuggling
 ipykernel = ">=7.1.0,<8"
 filelock = ">=3.20.3"        # GHSA-qmgc-5h2g-mvrw: TOCTOU symlink vulnerability in SoftFileLock
-urllib3 = ">=2.6.3"          # GHSA-38jv-5279-wg99
+urllib3 = ">=2.7.0"          # CVE-2026-44431, CVE-2026-44432
 virtualenv = ">=20.36.1,<21" # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability; capped <21 until hatch >=1.16.5 lands on conda-forge (see #48)
 cryptography = ">=46.0.7"    # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892
 pygments = ">=2.20.0"        # CVE-2026-4539
@@ -164,7 +164,7 @@ hatch = "*"
 toml-cli = "*"
 
 [tool.pixi.feature.developer.dependencies]
-pip = ">=25.2"     # CVE-2025-8869: Awaiting fix in 25.3 (not yet released)
+pip = ">=26.1"     # CVE-2026-6357
 pip-audit = "*"
 pre-commit = "*"
 ruff = "*"
