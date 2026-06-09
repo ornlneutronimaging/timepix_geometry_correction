@@ -113,7 +113,7 @@ requests = ">=2.33.0"        # CVE-2026-25645
 pillow = ">=12.2.0"          # CVE-2026-25990, CVE-2026-40192
 pyjwt = ">=2.12.0"           # CVE-2026-32597
 astropy = ">=7.2.0,<8"
-aiohttp = ">=3.13.4"         # CVE-2026-34514 and 9 others
+aiohttp = ">=3.14.0"         # CVE-2026-47265, CVE-2026-34993 (and earlier; >=3.13.4 no longer sufficient)
 tornado = ">=6.5.5"          # GHSA-78cv-mqj4-43f7, CVE-2026-31958, CVE-2026-35536
 
 [tool.pixi.pypi-dependencies]
