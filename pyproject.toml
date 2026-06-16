@@ -14,7 +14,6 @@ readme = "README.md"
 dependencies = [
   # Dependencies available from both PyPI and conda should be listed here
   "numpy>=2.2,<3",
-  "hatchling",
   # Dependencies only available from PyPI
 ]
 
@@ -107,14 +106,15 @@ ipykernel = ">=7.1.0,<8"
 filelock = ">=3.20.3"        # GHSA-qmgc-5h2g-mvrw: TOCTOU symlink vulnerability in SoftFileLock
 urllib3 = ">=2.7.0"          # CVE-2026-44431, CVE-2026-44432
 virtualenv = ">=20.36.1,<21" # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability; capped <21 until hatch >=1.16.5 lands on conda-forge (see #48)
-cryptography = ">=46.0.7"    # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892
+cryptography = ">=48.0.1"    # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892, GHSA-537c-gmf6-5ccf
+openssl = ">=3.6.3"          # CVE floor (org baseline); raises the openssl floor
 pygments = ">=2.20.0"        # CVE-2026-4539
 requests = ">=2.33.0"        # CVE-2026-25645
 pillow = ">=12.2.0"          # CVE-2026-25990, CVE-2026-40192
 pyjwt = ">=2.12.0"           # CVE-2026-32597
 astropy = ">=7.2.0,<8"
 aiohttp = ">=3.14.0"         # CVE-2026-47265, CVE-2026-34993 (and earlier; >=3.13.4 no longer sufficient)
-tornado = ">=6.5.5"          # GHSA-78cv-mqj4-43f7, CVE-2026-31958, CVE-2026-35536
+tornado = ">=6.5.7"          # GHSA-78cv-mqj4-43f7, CVE-2026-31958, CVE-2026-35536, GHSA-pw6j-qg29-8w7f
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
@@ -165,7 +165,6 @@ toml-cli = "*"
 
 [tool.pixi.feature.developer.dependencies]
 pip = ">=26.1"     # CVE-2026-6357
-pip-audit = "*"
 pre-commit = "*"
 ruff = "*"
 versioningit = "*"
@@ -205,7 +204,6 @@ conda-publish = { cmd = "anaconda upload *.conda", description = "Publish the .c
   "conda-build",
 ] }
 # Misc
-audit-deps = { cmd = "pip-audit --local -s osv", description = "Audit the package dependencies for vulnerabilities" }
 clean = { cmd = 'rm -rf .pytest_cache .ruff_cache **/*.egg-info **/dist **/__pycache__', description = "Clean up various caches and build artifacts" }
 clean-conda = { cmd = "rm -f *.conda", description = "Clean the local .conda build artifacts" }
 clean-docs = { cmd = "rm -rf docs/_build", description = "Clean up documentation build artifacts" }
@@ -228,7 +226,7 @@ start = "python -m timepix_geometry_correction"
 ##############
 
 [tool.pytest.ini_options]
-addopts = "-v --cov=timepix_geometry_correction --cov-report=term-missing"
+addopts = "-v --cov=timepix_geometry_correction --cov-report=term-missing --cov-report=xml"
 pythonpath = [".", "src", "scripts"]
 testpaths = ["tests"]
 python_files = ["test*.py"]
