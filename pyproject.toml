@@ -115,6 +115,9 @@ pyjwt = ">=2.12.0"           # CVE-2026-32597
 astropy = ">=7.2.0,<8"
 aiohttp = ">=3.14.0"         # CVE-2026-47265, CVE-2026-34993 (and earlier; >=3.13.4 no longer sufficient)
 tornado = ">=6.5.7"          # GHSA-78cv-mqj4-43f7, CVE-2026-31958, CVE-2026-35536, GHSA-pw6j-qg29-8w7f
+bleach = ">=6.4.0"           # GHSA-gj48-438w-jh9v, GHSA-8rfp-98v4-mmr6
+pydantic-settings = ">=2.14.2"  # GHSA-4xgf-cpjx-pc3j
+python = ">=3.14.6"          # CVE-2026-8328 (grype scans the interpreter; 3.14.5 is vulnerable)
 
 [tool.pixi.pypi-dependencies]
 # PyPI dependencies, including this package to allow local editable installs
