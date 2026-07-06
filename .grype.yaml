@@ -26,6 +26,17 @@ ignore:
   - vulnerability: CVE-2026-7774
     package:
       name: python
+  # CVE-2026-12003 fix is only in the 3.15.0b3 prerelease; no stable 3.14 build.
+  - vulnerability: CVE-2026-12003
+    package:
+      name: python
+
+  # `time` rust crate 0.3.45 (fixed 0.3.47) is compiled into a conda binary
+  # (transitive) and is not independently bumpable from this repo; clears when
+  # the upstream conda package is rebuilt against time >= 0.3.47.
+  - vulnerability: GHSA-r6v5-fh4h-64xc
+    package:
+      name: time
 
   # pyo3 0.28.x is statically linked into the rpds-py wheel (transitive); grype
   # catalogs it from the compiled binary, but it is not fixable from this repo —
