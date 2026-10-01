@@ -105,7 +105,7 @@ h2 = ">=4.3.0"                 # CVE-2025-57804: HTTP Request Smuggling
 ipykernel = ">=7.1.0,<8"
 filelock = ">=3.20.3"          # GHSA-qmgc-5h2g-mvrw: TOCTOU symlink vulnerability in SoftFileLock
 urllib3 = ">=2.7.0"            # CVE-2026-44431, CVE-2026-44432
-virtualenv = ">=20.36.1,<21"   # GHSA-597g-3phw-6986: TOCTOU symlink vulnerability; capped <21 until hatch >=1.16.5 lands on conda-forge (see #48)
+virtualenv = ">=21.7.12"       # GHSA-597g-3phw-6986, GHSA-9h9j-4vrj-gf7g, GHSA-94p9-xgh2-xp45
 cryptography = ">=48.0.1"      # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892, GHSA-537c-gmf6-5ccf
 openssl = ">=3.6.3"            # CVE floor (org baseline); raises the openssl floor
 pygments = ">=2.20.0"          # CVE-2026-4539
@@ -161,7 +161,7 @@ pytest-xdist = "*"
 anaconda-client = ">=1.13.0,<2"
 twine = ">=6.1.0,<7"
 versioningit = "*"
-hatch = "*"
+hatch = ">=1.16.5"              # >=1.16.5 supports virtualenv 21
 
 [tool.pixi.feature.package.pypi-dependencies]
 toml-cli = "*"
